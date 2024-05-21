@@ -1,0 +1,10 @@
+# стат анализатор
+mypy
+
+# тесты
+pytest
+pytest_asyncio
+
+httpx
+
+python-dotenv
