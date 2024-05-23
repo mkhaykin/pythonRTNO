@@ -1,9 +1,15 @@
+import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, types
+import httpx
+from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+
+from src.msg import MsgIn
+
+from .rabbit import rabbit_loop
 
 dp = Dispatcher()
 logger = logging.getLogger(__name__)
@@ -20,16 +26,20 @@ async def start_handler(message: Message) -> None:
 
 
 @dp.message()
-async def echo_handler(message: types.Message) -> None:
+async def base_handler(message: MsgIn) -> None:
     """
     Handler will forward receive a message back to the sender
     """
-    try:
-        # Send a copy of the received message
-        await message.send_copy(chat_id=message.chat.id)
-    except TypeError:
-        # But not all the types is supported to be copied so need to handle it
-        await message.answer("Nice try!")
+    # TODO try | catch
+    async with httpx.AsyncClient() as client:
+        _ = await client.post(
+            url="http://localhost:8000/ask",
+            json=message.model_dump_json(),
+        )
+
+
+async def on_startup(bot: Bot) -> None:
+    asyncio.create_task(rabbit_loop(bot))  # no await. It's right!
 
 
 async def bot_loop(token: str) -> None:
@@ -38,5 +48,6 @@ async def bot_loop(token: str) -> None:
         parse_mode=ParseMode.HTML,
     )
     logger.info("Bot loop starting ...")
+    dp.startup.register(on_startup)
     await dp.start_polling(bot)
     logger.info("Bot loop finished.")

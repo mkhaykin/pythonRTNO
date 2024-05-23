@@ -1,0 +1,37 @@
+# docker-compose.yml
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15.1-alpine
+    container_name: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+     - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-alpine
+    container_name: rabbitmq
+    hostname: rabbit
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_DEFAULT_VHOST}"
+    ports:
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+
+networks:
+  default:
+      name: lan_rtno
