@@ -3,7 +3,7 @@ import sys
 
 import uvicorn
 
-from api import app
+from src.api import app
 
 logging.basicConfig(
     level=logging.DEBUG,
