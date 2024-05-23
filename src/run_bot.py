@@ -2,7 +2,7 @@ import asyncio
 import logging
 import sys
 
-from bot import bot_loop
+from bot.main import bot_loop
 from settings import settings
 
 logging.basicConfig(
