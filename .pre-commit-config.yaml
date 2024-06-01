@@ -56,7 +56,7 @@ repos:
            PT013,
            T000,T101,
            W503",
-           # "--extend-immutable-calls=",
+           "--extend-immutable-calls=fastapi.Depends,fastapi.params.Depends,Depends",
            #
                # ANN101 Missing type annotation for self in method
                # ANN102 Missing type annotation for cls in classmethod
@@ -81,6 +81,7 @@ repos:
            "--per-file-ignores=tests/*.py:S101"
            # S101 Use of assert detected
         ]
+
 
   - repo: local
     hooks:

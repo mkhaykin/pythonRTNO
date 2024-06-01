@@ -1,6 +1,8 @@
+import json
+
 import aio_pika
 
-from src.msg import MsgOut
+from src.schemas import MsgForward, MsgOut
 from src.settings import settings
 
 
@@ -41,8 +43,7 @@ async def pop_message() -> None:
         await queue.consume(on_message, no_ack=True)
 
 
-async def push_message(msg: MsgOut) -> None:
-
+async def push_message(msg: MsgOut | MsgForward, msg_type: str) -> None:
     connection = await aio_pika.connect(
         host=settings.RABBITMQ_SERVER,
         port=settings.RABBITMQ_PORT,
@@ -58,12 +59,25 @@ async def push_message(msg: MsgOut) -> None:
         # Declaring queue
         queue = await channel.declare_queue("messages")
 
+        data = {
+            "type": msg_type,
+            "message": msg.model_dump(),
+        }
+
         # Sending the message
         await channel.default_exchange.publish(
-            aio_pika.Message(msg.model_dump_json().encode("utf-8")),
+            aio_pika.Message(json.dumps(data).encode("utf-8")),
             routing_key=queue.name,
         )
 
         print(f" [x] Sent '{msg}'")
 
     print("End push")
+
+
+async def push_message_to_send(msg: MsgOut) -> None:
+    await push_message(msg, "out")
+
+
+async def push_message_to_forward(msg: MsgForward) -> None:
+    await push_message(msg, "forward")

@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from os import environ
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 @dataclass
 class Settings:
@@ -20,6 +24,7 @@ class Settings:
     RABBITMQ_DEFAULT_PASS: str
     RABBITMQ_DEFAULT_VHOST: str
 
+    TG_BOT_ID: int
     TG_BOT_TOKEN: str
 
     OPENAI_API_KEY: str
@@ -39,6 +44,7 @@ settings = Settings(
     RABBITMQ_DEFAULT_USER=environ["RABBITMQ_DEFAULT_USER"],
     RABBITMQ_DEFAULT_PASS=environ["RABBITMQ_DEFAULT_PASS"],
     RABBITMQ_DEFAULT_VHOST=environ["RABBITMQ_DEFAULT_VHOST"],
+    TG_BOT_ID=int(environ["TG_BOT_ID"]),
     TG_BOT_TOKEN=environ["TG_BOT_TOKEN"],
     OPENAI_API_KEY=environ["OPENAI_API_KEY"],
 )

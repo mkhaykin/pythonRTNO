@@ -2,17 +2,12 @@ from aiogram.types import (
     ForceReply,
     InlineKeyboardMarkup,
     LinkPreviewOptions,
-    Message,
     MessageEntity,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     ReplyParameters,
 )
 from pydantic import BaseModel
-
-
-class MsgIn(Message):
-    pass
 
 
 class MsgOut(BaseModel):
