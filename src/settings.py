@@ -26,6 +26,7 @@ class Settings:
 
     TG_BOT_ID: int
     TG_BOT_TOKEN: str
+    TG_BOT_API_HOST: str
 
     OPENAI_API_KEY: str
 
@@ -46,5 +47,6 @@ settings = Settings(
     RABBITMQ_DEFAULT_VHOST=environ["RABBITMQ_DEFAULT_VHOST"],
     TG_BOT_ID=int(environ["TG_BOT_ID"]),
     TG_BOT_TOKEN=environ["TG_BOT_TOKEN"],
+    TG_BOT_API_HOST=environ["TG_BOT_API_HOST"],
     OPENAI_API_KEY=environ["OPENAI_API_KEY"],
 )

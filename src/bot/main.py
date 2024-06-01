@@ -11,6 +11,7 @@ from src import models
 from src.bot.rabbit import rabbit_loop
 from src.db import AsyncSessionLocal, create_obj, get_parent_message
 from src.schemas import user_name
+from src.settings import settings
 
 dp = Dispatcher()
 logger = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ async def base_handler(message: Message) -> None:
     # TODO try | catch
     async with httpx.AsyncClient() as client:
         _ = await client.post(
-            url="http://localhost:8000/message",
+            url=f"http://{settings.TG_BOT_API_HOST}:8000/message",
             json=message.model_copy(
                 update={
                     "db_id": db_message.id,
