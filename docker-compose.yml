@@ -11,13 +11,14 @@ services:
       POSTGRES_DB: "${POSTGRES_DB}"
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      PGUSER: "${POSTGRES_USER}"
     ports:
      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 1s
+      timeout: 1s
+      retries: 3
 
   redis:
     image: redis:7.2-alpine
@@ -26,8 +27,8 @@ services:
       - "${REDIS_PORT}:${REDIS_PORT}"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 30s
-      timeout: 10s
+      interval: 1s
+      timeout: 1s
       retries: 3
 
   rabbitmq:
@@ -43,8 +44,8 @@ services:
       - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 30s
+      interval: 3s
+      timeout: 3s
       retries: 3
 
   api:
