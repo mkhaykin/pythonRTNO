@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import models
 from src.api.rabbit import push_message_to_forward, push_message_to_send
+from src.api.redis import redis_get, redis_set
 from src.chat_gpt import is_call_to_operator
 from src.db.async_db import get_async_db
 from src.db.crud import create_obj, get_parent_message
@@ -75,20 +76,38 @@ async def send_answer(user_id: int, text: str) -> None:
 
 
 async def is_communication_with_operator(user_id: int) -> bool:
+    """
+    Проверяем, что беседа с этим пользователем закреплена за оператором
+    :param user_id:
+    :return:
+    """
     logger.debug(f"is_communication_with_operator({user_id})")
-    # TODO: проверить редис?
-    return False
+    return (await redis_get(user_id)) is not None
 
 
 async def is_operator_need(text: str) -> bool:
+    """
+    Проверяем, что текст сообщения пользователя требует обращения к оператору
+    :param text:
+    :return:
+    """
     logger.debug(f"is_operator_need('{text[:20]}')")
     return "позови человека" in text.lower() or is_call_to_operator(text)
 
 
 async def find_operator_for_user(user_id: int) -> int | None:
+    """
+    Подбираем оператора для пользователя. Пока крайне упрощенно.
+    :param user_id:
+    :return:
+    """
     logger.debug(f"find_operator_for_user {user_id}")
-    # TODO ищем оператора в редисе, если нет, то пустышку
-    return OPERATOR_ID  # my id
+    # TODO ищем оператора в редисе,
+    #  если нет, то None и дальше в process_question организуем выборы отвечающего
+    #  (пока всегда возвращаем меня)
+    if (operator_id := (await redis_get(user_id))) is None:
+        operator_id = OPERATOR_ID  # my id
+    return int(operator_id)
 
 
 async def process_question(
@@ -118,15 +137,19 @@ async def process_question(
         operator_id: int | None = await find_operator_for_user(message.from_user.id)
         logger.debug(f"chose operator with id {operator_id}")
         if operator_id is None:
-            # TODO следующий раунд выбора оператора
-            pass
+            # TODO следующий раунд выбора оператора для просрочки
+            raise Exception("TODO: мы не должны быть здесь")
         else:
+            # продляем беседу с оператором
+            await redis_set(message.from_user.id, OPERATOR_ID)
+
             await push_query_to_operator(operator_id, message)
     elif await is_operator_need(message.text):
         # TODO реализовать рассылку доступным операторам;
         #  после реализовать обработку отклика,
         #  пока заглушка
         await send_answer(message.from_user.id, "переключаю на человека")
+        await redis_set(message.from_user.id, OPERATOR_ID)
         await push_query_to_operator(OPERATOR_ID, message)
     else:
         msg_out = await robo_answer(message)
