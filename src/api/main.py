@@ -37,7 +37,7 @@ async def robo_answer(message: MsgIn) -> MsgOut | None:
         text=as_list(
             Bold("ROBO ANSWER:"),
             as_section(
-                as_line("go home!"),
+                as_line("какой-то авто ответ ..."),
             ),
         ).as_html(),
     )
