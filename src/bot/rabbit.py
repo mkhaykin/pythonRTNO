@@ -3,11 +3,10 @@ import logging
 
 import aio_pika
 from aiogram import Bot
-from aiogram.types import User
 
 from src import models
 from src.db import AsyncSessionLocal, create_obj, get_parent_message
-from src.schemas import MsgForward, MsgOut
+from src.schemas import MsgForward, MsgOut, user_name
 from src.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -111,7 +110,3 @@ async def rabbit_loop(bot: Bot) -> None:
                     logger.debug("finish message processing")
 
     logger.debug("fin rabbit_loop")
-
-
-def user_name(user: User) -> str:
-    return user.username or user.first_name or user.full_name or str(user.id)
