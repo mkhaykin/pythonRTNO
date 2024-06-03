@@ -7,10 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import models
 from src.api.rabbit import push_message_to_forward, push_message_to_send
+from src.chat_gpt import is_call_to_operator
 from src.db.async_db import get_async_db
 from src.db.crud import create_obj, get_parent_message
 from src.schemas import MsgForward, MsgIn, MsgOut, user_name
 from src.settings import settings
+
+OPERATOR_ID = 5378942534
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +25,12 @@ async def hello() -> dict:
     return {"msg": "Hello World"}
 
 
-@app.get("/echo/{msg}")
-async def echo(msg: str) -> dict:
-    return {"msg": f"{msg}"}
-
-
 async def robo_answer(message: MsgIn) -> MsgOut | None:
+    """
+    Генерация ответа при разговоре без оператора
+    :param message: входящее сообщение
+    :return: исходящее сообщение
+    """
     answer = MsgOut(
         chat_id=message.chat.id,
         text=as_list(
@@ -41,6 +44,12 @@ async def robo_answer(message: MsgIn) -> MsgOut | None:
 
 
 async def push_query_to_operator(operator_id: int, message: MsgIn) -> None:
+    """
+    Отправка сообщения оператору
+    :param operator_id:
+    :param message:
+    :return:
+    """
     answer = MsgForward(
         chat_id=operator_id,
         from_chat_id=message.chat.id,
@@ -51,6 +60,12 @@ async def push_query_to_operator(operator_id: int, message: MsgIn) -> None:
 
 
 async def send_answer(user_id: int, text: str) -> None:
+    """
+    Отправка простого сообщения
+    :param user_id:
+    :param text:
+    :return:
+    """
     answer = MsgOut(
         chat_id=user_id,
         text=text,
@@ -59,30 +74,21 @@ async def send_answer(user_id: int, text: str) -> None:
     await push_message_to_send(answer)
 
 
-async def is_operator(user_id: int) -> bool:
-    logger.debug(f"is_user({user_id})")
-    # TODO
-    return user_id == 5378942534
-
-
 async def is_communication_with_operator(user_id: int) -> bool:
     logger.debug(f"is_communication_with_operator({user_id})")
-    # TODO
-    return True
+    # TODO: проверить редис?
+    return False
 
 
 async def is_operator_need(text: str) -> bool:
-    logger.debug(f"is_operator_need({text[:20]})")
-    # TODO
-    return False
+    logger.debug(f"is_operator_need('{text[:20]}')")
+    return "позови человека" in text.lower() or is_call_to_operator(text)
 
 
 async def find_operator_for_user(user_id: int) -> int | None:
     logger.debug(f"find_operator_for_user {user_id}")
     # TODO ищем оператора в редисе, если нет, то пустышку
-    # 5378942534 - я +7 960 741 0939
-    # 7055278609 - планшет +7 960 747 4570
-    return 5378942534  # my id
+    return OPERATOR_ID  # my id
 
 
 async def process_question(
@@ -108,18 +114,20 @@ async def process_question(
     msg_out: MsgOut | None = None
 
     if await is_communication_with_operator(message.from_user.id):
-        # TODO отправляем запрос оператору
-        oper_id: int | None = await find_operator_for_user(message.from_user.id)
-        logger.debug(
-            f"oper = {oper_id}",
-        )
-        if oper_id is None:
+        # подбираем оператора
+        operator_id: int | None = await find_operator_for_user(message.from_user.id)
+        logger.debug(f"chose operator with id {operator_id}")
+        if operator_id is None:
             # TODO следующий раунд выбора оператора
             pass
         else:
-            await push_query_to_operator(oper_id, message)
+            await push_query_to_operator(operator_id, message)
     elif await is_operator_need(message.text):
-        pass
+        # TODO реализовать рассылку доступным операторам;
+        #  после реализовать обработку отклика,
+        #  пока заглушка
+        await send_answer(message.from_user.id, "переключаю на человека")
+        await push_query_to_operator(OPERATOR_ID, message)
     else:
         msg_out = await robo_answer(message)
 
